@@ -398,7 +398,7 @@ function toast(msg) {
   el.toast.textContent = msg;
   el.toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.toast.classList.remove('show'), 3800);
+  toastTimer = setTimeout(() => el.toast.classList.remove('show'), 5000);
 }
 
 function note(msg) {
