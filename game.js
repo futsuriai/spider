@@ -8,11 +8,11 @@ const SUITS = {
 };
 const RANKS = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const LEVELS = {
-  easy: { label: 'Easy', suits: ['S'], heartsSuits: ['H'], undo: true },
-  medium: { label: 'Medium', suits: ['S', 'H'], heartsSuits: ['H', 'C'], undo: true },
-  hard: { label: 'Hard', suits: ['S', 'H', 'D', 'C'], undo: true },
-  bold: { label: 'Bold', suits: ['S', 'H', 'D', 'C'], undo: true },
-  expert: { label: 'Expert', suits: ['S', 'H', 'D', 'C'], undo: false },
+  easy: { label: 'Easy', suits: ['S'], heartsSuits: ['H'] },
+  medium: { label: 'Medium', suits: ['S', 'H'], heartsSuits: ['H', 'C'] },
+  hard: { label: 'Hard', suits: ['S', 'H', 'D', 'C'] },
+  bold: { label: 'Bold', suits: ['S', 'H', 'D', 'C'] },
+  expert: { label: 'Expert', suits: ['S', 'H', 'D', 'C'] },
 };
 const DEFAULT_OPTIONS = {
   messages: true,
@@ -29,8 +29,8 @@ const STORE = { game: 'spider.game', options: 'spider.options' };
 const GAP = 6;
 const PAD = 12;
 const BASE_PAD = 8;
-const CANT_MOVE = "That card can't move. Pick up a run of one suit in order, like 7 to 5 of hearts.";
-const BAD_DROP = 'That card needs to go on one rank higher.';
+const CANT_MOVE = "This card can't move. Pick up a run of one suit, in order.";
+const BAD_DROP = 'That card needs a card one rank higher.';
 
 const $ = (sel) => document.querySelector(sel);
 const el = {
@@ -39,9 +39,9 @@ const el = {
   stock: $('#stock'),
   foundations: $('#foundations'),
   tableau: $('#tableau'),
-  overlay: $('#overlay'),
   toast: $('#toast'),
   dragLayer: $('#drag-layer'),
+  level: $('#hud-level'),
   score: $('#hud-score'),
   moves: $('#hud-moves'),
   time: $('#hud-time'),
@@ -51,11 +51,50 @@ let game = null;
 let options = { ...DEFAULT_OPTIONS };
 let drag = null;
 let bounced = new Set();
+let pendingLevel = null;
 let toastTimer = 0;
 let audio = null;
 let cw = 60;
 let ch = 84;
 let lift = 0;
+
+// ---------- screens and sheets ----------
+
+function show(name) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === `screen-${name}`));
+}
+
+function onGameScreen() {
+  return $('#screen-game').classList.contains('active');
+}
+
+function openSheet(id) {
+  $(`#${id}`).classList.add('open');
+}
+
+function closeSheet(id) {
+  $(`#${id}`).classList.remove('open');
+}
+
+function sheetOpen() {
+  return !!document.querySelector('.sheet-overlay.open');
+}
+
+function go(name) {
+  if (name === 'home') renderHome();
+  if (name === 'game') render();
+  if (name === 'options') syncOptionInputs();
+  show(name);
+}
+
+function renderHome() {
+  const live = game && !game.won ? game : null;
+  $('#btn-resume').hidden = !live;
+  if (live) {
+    $('#resume-title').textContent = LEVELS[live.diff].label;
+    $('#resume-meta').textContent = `${live.moves} ${live.moves === 1 ? 'move' : 'moves'} · ${fmt(live.elapsed)}`;
+  }
+}
 
 // ---------- storage (every read and write is allowed to fail) ----------
 
@@ -125,7 +164,6 @@ function newGame(level) {
   }
   game = { diff: level, tableau, stock: deck, done: 0, score: 500, moves: 0, elapsed: 0, won: false, history: [], selected: null };
   bounced = new Set();
-  el.overlay.hidden = true;
   afterChange();
 }
 
@@ -160,6 +198,7 @@ function collectSuit(ci) {
   flip(col);
   game.done++;
   game.score += 100;
+  toast('Suit complete! +100');
   sfx(660, 0.18, 'triangle', 0.07);
 }
 
@@ -168,7 +207,6 @@ function snapshot() {
 }
 
 function checkpoint() {
-  if (!LEVELS[game.diff].undo) return;
   game.history.push(snapshot());
   if (game.history.length > 100) game.history.shift();
 }
@@ -221,7 +259,7 @@ function dealRow() {
 function undo() {
   if (!game || game.won) return;
   const prev = game.history.pop();
-  if (!prev) return toast(LEVELS[game.diff].undo ? 'Nothing to undo.' : 'Undo is off on Expert.');
+  if (!prev) return toast('Nothing to undo yet.');
   Object.assign(game, JSON.parse(prev));
   game.selected = null;
   bounced = new Set();
@@ -244,7 +282,7 @@ function layout() {
   const width = el.tableau.clientWidth - 2 * PAD - 9 * GAP;
   cw = Math.max(40, Math.min(110, Math.floor(width / 10)));
   ch = Math.round(cw * 1.4);
-  lift = Math.round(ch * 0.45 * options.lowering / 100);
+  lift = Math.round((ch * 0.45 * options.lowering) / 100);
   const root = document.documentElement.style;
   root.setProperty('--cw', cw + 'px');
   root.setProperty('--ch', ch + 'px');
@@ -288,8 +326,7 @@ function renderTableau() {
     colEl.className = 'col';
     colEl.dataset.col = ci;
     const steps = fanSteps(col.length);
-    const base = BASE_PAD + lift;
-    let y = base;
+    let y = BASE_PAD + lift;
     col.forEach((card, idx) => {
       const node = cardNode(card);
       node.dataset.idx = idx;
@@ -308,6 +345,7 @@ function renderTop() {
   const deals = game.stock.length / 10;
   el.stock.innerHTML = '';
   el.stock.classList.toggle('empty', deals === 0);
+  el.stock.disabled = deals === 0;
   for (let i = 0; i < Math.min(4, deals); i++) {
     const back = cardNode({ up: false });
     back.style.left = i * 2 + 'px';
@@ -337,6 +375,7 @@ function fmt(sec) {
 }
 
 function updateHud() {
+  el.level.textContent = LEVELS[game.diff].label;
   el.score.textContent = game.score;
   el.moves.textContent = game.moves;
   el.time.textContent = fmt(game.elapsed);
@@ -348,7 +387,9 @@ function render() {
   updateHud();
   renderTop();
   renderTableau();
-  el.undo.disabled = game.won || game.history.length === 0;
+  const noUndo = game.won || game.history.length === 0;
+  el.undo.classList.toggle('is-disabled', noUndo);
+  el.undo.setAttribute('aria-disabled', String(noUndo));
 }
 
 // ---------- touch: drag a run, or tap a card then tap where it goes ----------
@@ -357,7 +398,7 @@ function toast(msg) {
   el.toast.textContent = msg;
   el.toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.toast.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => el.toast.classList.remove('show'), 3800);
 }
 
 function note(msg) {
@@ -366,8 +407,21 @@ function note(msg) {
 
 function columnAt(x, y) {
   const hit = document.elementFromPoint(x, y);
-  const colEl = hit && hit.closest('.col');
-  return colEl ? Number(colEl.dataset.col) : -1;
+  const direct = hit && hit.closest('.col');
+  if (direct) return Number(direct.dataset.col);
+  // Finger landed in the gap between columns: use the nearest column.
+  let best = -1;
+  let bestDist = Infinity;
+  el.tableau.querySelectorAll('.col').forEach((c) => {
+    const r = c.getBoundingClientRect();
+    if (y < r.top || y > r.bottom) return;
+    const dist = Math.abs(x - (r.left + r.width / 2));
+    if (dist < bestDist && dist <= r.width / 2 + GAP * 2) {
+      bestDist = dist;
+      best = Number(c.dataset.col);
+    }
+  });
+  return best;
 }
 
 function onTap(ci, idx) {
@@ -446,6 +500,7 @@ el.tableau.addEventListener('pointerdown', (e) => {
     offX: e.clientX - rect.left,
     offY: e.clientY - rect.top,
     moving: false,
+    warned: false,
     ok: isRun(game.tableau[ci], idx),
     ghost: null,
   };
@@ -455,7 +510,14 @@ el.tableau.addEventListener('pointerdown', (e) => {
 el.tableau.addEventListener('pointermove', (e) => {
   if (!drag || e.pointerId !== drag.pointer) return;
   if (!drag.moving) {
-    if (!drag.ok || Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
+    if (!drag.ok) {
+      if (!drag.warned) {
+        drag.warned = true;
+        note(CANT_MOVE);
+      }
+      return;
+    }
     startDrag();
   }
   placeGhost(e.clientX, e.clientY);
@@ -469,6 +531,7 @@ function endPointer(e) {
   if (d.ghost) d.ghost.remove();
   el.tableau.querySelectorAll('.col').forEach((c) => c.classList.remove('target', 'bad'));
   if (e.type === 'pointercancel') return render();
+  if (d.warned) return render();
   if (!d.moving) return onTap(d.ci, d.idx);
   const to = columnAt(e.clientX, e.clientY);
   if (to >= 0) moveRun(d.ci, d.idx, to);
@@ -479,42 +542,47 @@ el.tableau.addEventListener('pointerup', endPointer);
 el.tableau.addEventListener('pointercancel', endPointer);
 el.stock.addEventListener('click', dealRow);
 el.undo.addEventListener('click', undo);
-el.menu.addEventListener('click', openMenu);
+el.menu.addEventListener('click', () => go('home'));
 
-// ---------- sheets (menu, options, help, win) ----------
+// ---------- home, options, help, win, confirm ----------
 
-function showSheet(id) {
-  el.overlay.hidden = false;
-  document.querySelectorAll('.sheet').forEach((s) => (s.hidden = s.id !== id));
+document.querySelectorAll('[data-go]').forEach((btn) => {
+  btn.addEventListener('click', () => go(btn.dataset.go));
+});
+
+$('#btn-resume').addEventListener('click', () => go('game'));
+
+document.querySelectorAll('[data-diff]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (game && !game.won && game.moves > 0) {
+      pendingLevel = btn.dataset.diff;
+      openSheet('sheet-confirm');
+      return;
+    }
+    startGame(btn.dataset.diff);
+  });
+});
+
+function startGame(level) {
+  newGame(level);
+  go('game');
 }
 
-function openMenu() {
-  $('#btn-resume').hidden = !game || game.won;
-  showSheet('screen-menu');
-}
+$('#btn-confirm-new').addEventListener('click', () => {
+  closeSheet('sheet-confirm');
+  startGame(pendingLevel);
+});
+$('#btn-confirm-keep').addEventListener('click', () => closeSheet('sheet-confirm'));
 
 function showWin() {
   $('#win-text').textContent = `${game.moves} moves in ${fmt(game.elapsed)}. Final score: ${game.score}.`;
   sfx(784, 0.4, 'sine', 0.08);
-  showSheet('screen-win');
+  openSheet('sheet-win');
 }
 
-document.querySelectorAll('[data-diff]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const lost = game && !game.won && game.moves > 0;
-    if (lost && !confirm('Start a new game? This one will be lost.')) return;
-    newGame(btn.dataset.diff);
-  });
-});
-$('#btn-resume').addEventListener('click', () => (el.overlay.hidden = true));
-$('#btn-options').addEventListener('click', () => {
-  syncOptionInputs();
-  showSheet('screen-options');
-});
-$('#btn-help').addEventListener('click', () => showSheet('screen-help'));
-$('#btn-play-again').addEventListener('click', openMenu);
-document.querySelectorAll('[data-back]').forEach((btn) => {
-  btn.addEventListener('click', () => (btn.dataset.back === 'game' ? (el.overlay.hidden = true) : openMenu()));
+$('#btn-play-again').addEventListener('click', () => {
+  closeSheet('sheet-win');
+  go('home');
 });
 
 function syncOptionInputs() {
@@ -543,7 +611,7 @@ function applyOptions() {
       // Not supported on this browser: sounds play normally.
     }
   }
-  render();
+  if (game) render();
 }
 
 // ---------- sound (generated, no files) ----------
@@ -572,7 +640,7 @@ function sfx(freq, dur, type, gain) {
 // ---------- timer, saving, and launch ----------
 
 setInterval(() => {
-  if (!game || game.won || document.hidden || !el.overlay.hidden) return;
+  if (!game || game.won || document.hidden || !onGameScreen() || sheetOpen()) return;
   game.elapsed++;
   updateHud();
   if (game.elapsed % 10 === 0) saveGame();
@@ -583,18 +651,14 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', saveGame);
 window.addEventListener('resize', () => render());
+document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function boot() {
   loadOptions();
   applyOptions();
   game = loadGame();
   if (game && game.won) game = null;
-  if (game) {
-    el.overlay.hidden = true;
-    render();
-  } else {
-    openMenu();
-  }
+  go('home');
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 }
 
