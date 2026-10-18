@@ -11,8 +11,6 @@ const LEVELS = {
   easy: { label: 'Easy', suits: ['S'], heartsSuits: ['H'] },
   medium: { label: 'Medium', suits: ['S', 'H'], heartsSuits: ['H', 'C'] },
   hard: { label: 'Hard', suits: ['S', 'H', 'D', 'C'] },
-  bold: { label: 'Bold', suits: ['S', 'H', 'D', 'C'] },
-  expert: { label: 'Expert', suits: ['S', 'H', 'D', 'C'] },
 };
 const DEFAULT_OPTIONS = {
   back: 'lattice',
@@ -133,7 +131,10 @@ function saveGame() {
 
 function loadGame() {
   const saved = read(STORE.game);
-  if (saved && Array.isArray(saved.tableau) && saved.tableau.length === 10 && LEVELS[saved.diff]) return saved;
+  if (!saved || !Array.isArray(saved.tableau) || saved.tableau.length !== 10) return null;
+  // Bold and Expert were removed: their games carry on as Hard.
+  if (saved.diff === 'bold' || saved.diff === 'expert') saved.diff = 'hard';
+  return LEVELS[saved.diff] ? saved : null;
   return null;
 }
 
