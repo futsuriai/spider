@@ -6,11 +6,22 @@ const ASSETS = [
   'index.html',
   'styles.css',
   'game.js',
-  'court-art.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/apple-touch-icon.png',
+  'court/spade_jack.png',
+  'court/spade_queen.png',
+  'court/spade_king.png',
+  'court/heart_jack.png',
+  'court/heart_queen.png',
+  'court/heart_king.png',
+  'court/diamond_jack.png',
+  'court/diamond_queen.png',
+  'court/diamond_king.png',
+  'court/club_jack.png',
+  'court/club_queen.png',
+  'court/club_king.png',
 ];
 
 self.addEventListener('install', (event) => {

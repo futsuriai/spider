@@ -826,27 +826,9 @@ body.no-rich .rich { display: none; }
   transform: translate(-50%, -50%) rotate(180deg);
 }
 
-/* Court cards (J, Q, K): illustrated SVG portrait in a framed panel; the robe takes the suit colour */
-.court {
-  position: absolute;
-  top: 22%;
-  bottom: 22%;
-  left: 12%;
-  right: 12%;
-  border-radius: calc(var(--cw) * 0.05);
-  overflow: hidden;
-  border: 1px solid var(--brass);
-  background: linear-gradient(180deg, #fffef9 0%, var(--card) 60%, var(--card-warm) 100%);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
-  pointer-events: none;
-}
-.card.up.red .court { color: var(--card-red); }
-.card.up.black .court { color: var(--ink); }
-.court svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+/* Court cards: the classic full-card image, which carries its own corner indices */
+.card.up.face-art { background: none; box-shadow: 0 1px 2px var(--shadow); overflow: hidden; }
+.face-img { display: block; width: 100%; height: 100%; pointer-events: none; }
 
 /* Card bouncing: landed cards overshoot slightly as they settle. */
 .card.bounce { transition-timing-function: cubic-bezier(0.34, 1.5, 0.64, 1); }

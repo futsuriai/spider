@@ -31,3 +31,8 @@ Files:
 - `game.js`: rules, touch handling, saving and options
 - `sw.js`: offline cache (network first, cache when offline)
 - `manifest.webmanifest`, `icons/`: home-screen install
+
+## Credits
+
+Jack, Queen and King card faces are from SVG-cards by David Bellot, under the LGPL 2.1.
+See `court/NOTICE.md` and `court/LICENSE-svg-cards.txt`.
