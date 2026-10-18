@@ -1342,3 +1342,47 @@ body.back-navy .card.down,
 .card.up .corner.tl { top: 4%; left: 6%; }
 .card.up .corner.tl b { font-size: calc(var(--cw) * 0.28); }
 .card.up .corner.tl i { font-size: calc(var(--cw) * 0.34); }
+
+/* Compact header: the deck and the eight suit spots sit in the top bar, so columns use the full height */
+.pile-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 6px;
+}
+.stock {
+  position: relative;
+  width: 40px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex: 0 0 auto;
+}
+.stock .card { width: 40px; height: 56px; }
+.stock .count {
+  right: -7px;
+  bottom: -7px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+.foundations {
+  display: grid;
+  grid-template-columns: repeat(8, 14px);
+  gap: 3px;
+}
+.foundations .slot {
+  width: 14px;
+  height: 20px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+#tableau { margin-top: 8px; }
+
+/* Header row: menu, stats, deck and suit spots, then the actions, all on one line */
+.hud { grid-template-columns: auto 1fr auto auto; }
+.actions { display: flex; gap: 8px; white-space: nowrap; }
+.hud .btn { min-width: 0; }

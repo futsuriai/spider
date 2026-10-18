@@ -58,6 +58,10 @@
         <div class="stat rich"><span class="label">Moves</span> <b id="hud-moves">0</b></div>
         <div class="stat rich"><span class="label">Time</span> <b id="hud-time">0:00</b></div>
       </div>
+      <div class="pile-area">
+        <button id="stock" class="stock" type="button" aria-label="Deal one card to every column"></button>
+        <div id="foundations" class="foundations" aria-label="Completed suits"></div>
+      </div>
       <div class="actions">
         <button class="btn" id="btn-undo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
         <button class="btn" id="btn-hint" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Hint</button>
@@ -65,10 +69,6 @@
     </header>
 
     <main id="board">
-      <div class="top-row">
-        <button id="stock" class="stock" type="button" aria-label="Deal one card to every column"></button>
-        <div id="foundations" class="foundations" aria-label="Completed suits"></div>
-      </div>
       <div id="tableau"></div>
     </main>
   </section>
