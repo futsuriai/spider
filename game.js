@@ -350,7 +350,7 @@ function fanSteps(n) {
   let up = max;
   if (options.spacing && n > 1) {
     const room = el.tableau.clientHeight - ch - BASE_PAD - lift;
-    up = Math.max(min, Math.min(max, room / (n - 1)));
+    up = Math.max(min, Math.min(ch * 0.55, room / (n - 1)));
   }
   return { up, down: up * 0.5 };
 }

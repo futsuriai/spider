@@ -1,93 +1,59 @@
 'use strict';
 
-// Court card portraits (Jack, Queen, King). Each is a half-length figure in an engraved
-// style: a patterned robe with an ermine collar, a shaded face and distinct headwear.
-// The robe takes the suit colour through currentColor. Shapes stay bold so each figure
-// still reads at card size.
+// Court card portraits (Jack, Queen, King). Each is a half-length figure in a robe
+// that takes the suit colour through currentColor, with gold trim and a headpiece.
 const COURT_ART = (() => {
-  const gold = '#c9a24e';
-  const ink = '#2b2420';
+  const robe = (d) => `<path d="${d}" fill="currentColor"/>`;
+  const trim = `<path d="M36,92 L50,112 L64,92" fill="none" stroke="#d9b25f" stroke-width="3.5" stroke-linejoin="round"/>`;
+  const neck = `<path d="M44,76 L44,93 L56,93 L56,76 Z" fill="#e9bb93"/>`;
+  const face = `<ellipse cx="50" cy="62" rx="14" ry="17" fill="#f2c9a3" stroke="#7a4b2e" stroke-width="0.8"/>`;
+  const features =
+    `<ellipse cx="44.5" cy="61" rx="1.7" ry="1.2" fill="#2b1d16"/>` +
+    `<ellipse cx="55.5" cy="61" rx="1.7" ry="1.2" fill="#2b1d16"/>` +
+    `<path d="M41,56 Q44.5,54 48,56 M52,56 Q55.5,54 59,56" stroke="#4a2e1c" stroke-width="1" fill="none"/>` +
+    `<path d="M50,61 L48.5,68 L51.5,68" fill="none" stroke="#9a6642" stroke-width="0.8"/>` +
+    `<path d="M45.5,73 Q50,76 54.5,73" fill="none" stroke="#9c4a3a" stroke-width="1.1" stroke-linecap="round"/>`;
+  const svg = (body) => `<svg viewBox="12 14 76 78" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${body}</svg>`;
 
-  const defs = (id) =>
-    `<defs>` +
-    `<linearGradient id="${id}-skin" x1="0" y1="0" x2="1" y2="1">` +
-    `<stop offset="0" stop-color="#f7dcbc"/><stop offset="1" stop-color="#dd9f72"/></linearGradient>` +
-    `<pattern id="${id}-robe" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
-    `<rect width="6" height="6" fill="currentColor"/><rect width="2.2" height="2.2" fill="#f3e3b5" opacity="0.5"/></pattern>` +
-    `<pattern id="${id}-ermine" width="7" height="7" patternUnits="userSpaceOnUse">` +
-    `<rect width="7" height="7" fill="#f7f1e1"/><path d="M3.5,1 v3 M2,2.5 h3" stroke="${ink}" stroke-width="0.9"/></pattern>` +
-    `</defs>`;
+  // Jack: a flat cap with a feather, short hair, no beard.
+  const jack = svg(
+    robe('M14,140 C14,112 22,98 36,92 L64,92 C78,98 86,112 86,140 Z') +
+      trim +
+      neck +
+      `<path d="M37,58 Q37,46 50,46 Q63,46 63,58 Q58,50 50,50 Q42,50 37,58 Z" fill="#5b3a24"/>` +
+      face +
+      features +
+      `<path d="M30,50 Q32,30 50,30 Q68,30 70,50 Z" fill="#d9b25f" stroke="#8a6526" stroke-width="0.8"/>` +
+      `<rect x="30" y="47.5" width="40" height="5" fill="currentColor"/>` +
+      `<path d="M62,36 Q80,14 86,30 Q78,26 66,40 Z" fill="#b3202b"/>`,
+  );
 
-  const shoulders = (id) =>
-    `<path d="M12,140 C12,112 20,98 35,91 L65,91 C80,98 88,112 88,140 Z" fill="url(#${id}-robe)" stroke="#3b1b1b" stroke-width="0.6"/>`;
-  const ermine = (id) => `<path d="M31,92 Q50,102 69,92 L72,100 Q50,112 28,100 Z" fill="url(#${id}-ermine)"/>`;
-  const neck = (id) => `<path d="M44,75 L44,92 Q50,96 56,92 L56,75 Z" fill="url(#${id}-skin)" stroke="#8a5a3c" stroke-width="0.5"/>`;
+  // Queen: long hair falling to the shoulders, a jewelled tiara, pearls at the neck.
+  const queen = svg(
+    `<path d="M34,62 Q31,34 50,33 Q69,34 66,62 L66,86 Q58,82 50,86 Q42,82 34,86 Z" fill="#5b3a24"/>` +
+      robe('M14,140 C14,112 22,98 36,92 L64,92 C78,98 86,112 86,140 Z') +
+      trim +
+      neck +
+      face +
+      features +
+      `<path d="M38,40 L41,30 L46,37 L50,27 L54,37 L59,30 L62,40 Z" fill="#d9b25f" stroke="#8a6526" stroke-width="0.8"/>` +
+      `<circle cx="50" cy="33.5" r="1.5" fill="#2f7f6f"/>` +
+      [38, 44, 50, 56, 62].map((x) => `<circle cx="${x}" cy="97" r="1.3" fill="#f6f1e4"/>`).join(''),
+  );
 
-  const face = (id) =>
-    `<path d="M36,56 Q36,40 50,40 Q64,40 64,56 Q64,76 50,80 Q36,76 36,56 Z" fill="url(#${id}-skin)" stroke="#7a4b2e" stroke-width="0.7"/>`;
-
-  const features = (brow) =>
-    `<path d="M40,60 Q44,57.5 48,60 Q44,61.8 40,60 Z M52,60 Q56,57.5 60,60 Q56,61.8 52,60 Z" fill="#fff9ef" stroke="#4a2e1c" stroke-width="0.6"/>` +
-    `<circle cx="44" cy="60" r="0.9" fill="#3b2418"/><circle cx="56" cy="60" r="0.9" fill="#3b2418"/>` +
-    `<path d="M40,55.5 Q44,53.5 48,55.5 M52,55.5 Q56,53.5 60,55.5" fill="none" stroke="${brow}" stroke-width="1.1" stroke-linecap="round"/>` +
-    `<path d="M50,60 Q48.5,67 50.5,68 Q52,68 51.5,67" fill="none" stroke="#8a5a3c" stroke-width="0.7"/>` +
-    `<path d="M45,73.5 Q50,75.8 55,73.5 Q50,72.8 45,73.5 Z" fill="#a4483a" stroke="#6b2b22" stroke-width="0.4"/>` +
-    `<path d="M57,64 l-3,5 M59,68 l-3,4" stroke="#8a5a3c" stroke-width="0.5" opacity="0.7"/>`;
-
-  const svg = (id, body) =>
-    `<svg viewBox="12 12 76 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${defs(id)}${body}</svg>`;
-
-  // Jack: a gold cap with a black band and a red plume, short hair.
-  const jack = (() => {
-    const id = 'jk';
-    return svg(
-      id,
-      shoulders(id) +
-        ermine(id) +
-        neck(id) +
-        `<path d="M36,58 Q35,44 50,44 Q65,44 64,58 Q60,50 50,49 Q41,50 36,58 Z" fill="#4a2e1c"/>` +
-        face(id) +
-        features('#4a2e1c') +
-        `<path d="M29,49 Q31,31 50,31 Q69,31 71,49 Z" fill="${gold}" stroke="#6b4e1c" stroke-width="0.7"/>` +
-        `<path d="M30,47 L70,47 L70,52 L30,52 Z" fill="${ink}"/>` +
-        `<path d="M64,38 Q82,18 88,30 Q78,30 66,42 Z" fill="#a52a33" stroke="#5e1218" stroke-width="0.5"/>`,
-    );
-  })();
-
-  // Queen: flowing hair, a jewelled tiara and a pearl necklace.
-  const queen = (() => {
-    const id = 'qn';
-    return svg(
-      id,
-      `<path d="M33,62 Q29,32 50,31 Q71,32 67,62 L68,90 Q58,85 50,89 Q42,85 32,90 Z" fill="#4a2e1c" stroke="#2b1a10" stroke-width="0.5"/>` +
-        shoulders(id) +
-        ermine(id) +
-        neck(id) +
-        face(id) +
-        features('#4a2e1c') +
-        `<path d="M38,42 L40,30 L46,37 L50,27 L54,37 L60,30 L62,42 Z" fill="${gold}" stroke="#6b4e1c" stroke-width="0.6"/>` +
-        `<circle cx="50" cy="34.5" r="1.6" fill="#2f7f6f" stroke="#1d4a42" stroke-width="0.3"/>` +
-        [40, 45, 50, 55, 60].map((x) => `<circle cx="${x}" cy="97" r="1.2" fill="#f8f3e6" stroke="#9c8f72" stroke-width="0.3"/>`).join(''),
-    );
-  })();
-
-  // King: a Gothic crown with arches and red jewels, grey hair and a forked beard.
-  const king = (() => {
-    const id = 'kg';
-    return svg(
-      id,
-      shoulders(id) +
-        ermine(id) +
-        neck(id) +
-        `<path d="M37,70 Q36,86 50,88 Q64,86 63,70 Q60,80 50,81 Q40,80 37,70 Z" fill="#9b9088" stroke="#5f554e" stroke-width="0.5"/>` +
-        face(id) +
-        features('#8c8580') +
-        `<path d="M36,56 Q35,39 50,39 Q65,39 64,56 Q61,46 50,46 Q39,46 36,56 Z" fill="#9b9088" stroke="#5f554e" stroke-width="0.5"/>` +
-        `<path d="M35,44 L35,33 Q42,28 42,36 Q44,22 50,20 Q56,22 58,36 Q58,28 65,33 L65,44 Z" fill="${gold}" stroke="#6b4e1c" stroke-width="0.7"/>` +
-        `<rect x="34" y="42" width="32" height="4" fill="#b8913f" stroke="#6b4e1c" stroke-width="0.5"/>` +
-        [[41, 35], [50, 27], [59, 35]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#b3202b" stroke="#5e1218" stroke-width="0.3"/>`).join(''),
-    );
-  })();
+  // King: a gold crown with red jewels, grey hair and a full beard.
+  const king = svg(
+    robe('M14,140 C14,112 22,98 36,92 L64,92 C78,98 86,112 86,140 Z') +
+      trim +
+      neck +
+      `<path d="M37,66 Q37,85 50,85 Q63,85 63,66 Q60,77 50,77 Q40,77 37,66 Z" fill="#8c8580"/>` +
+      face +
+      features +
+      `<path d="M36,56 Q36,40 50,40 Q64,40 64,56 Q60,46 50,46 Q40,46 36,56 Z" fill="#8c8580"/>` +
+      `<path d="M35,44 L38,26 L44,36 L50,22 L56,36 L62,26 L65,44 Z" fill="#d9b25f" stroke="#8a6526" stroke-width="0.9"/>` +
+      `<rect x="34" y="41" width="32" height="4.5" fill="#c9a24e" stroke="#8a6526" stroke-width="0.6"/>` +
+      [[38, 26], [50, 22], [62, 26]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#b3202b"/>`).join(''),
+  );
 
   return { 11: jack, 12: queen, 13: king };
 })();
