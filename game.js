@@ -369,13 +369,11 @@ function cardNode(card) {
   const rank = RANKS[card.r];
   const corner = `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>`;
   if (card.r > 10) {
-    // Court cards: the licensed full-card art on uncovered cards; covered cards show only the corner.
+    // Court cards: the top half of the figure, shown at the bottom of an uncovered card; the rank and suit stay in the corner.
     node.classList.add('court');
     const word = { 11: 'jack', 12: 'queen', 13: 'king' }[card.r];
     const suitWord = { S: 'spade', H: 'heart', D: 'diamond', C: 'club' }[card.s];
-    node.innerHTML =
-      `<svg class="face-svg" viewBox="0 60 169.075 64.32" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="court/court-cards.svg#${suitWord}_${word}"/></svg>` +
-      corner;
+    node.innerHTML = `<img class="face-img" src="court/figures/${suitWord}_${word}.svg" alt="${word} of ${suitWord}s" draggable="false">` + corner;
     return node;
   }
   // Number cards show one large suit in the open area, like an Ace; covered cards hide it in CSS.

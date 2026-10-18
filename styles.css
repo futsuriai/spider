@@ -823,8 +823,8 @@ body.no-rich .rich { display: none; }
 .card.court:not(.covered) {
   overflow: hidden;
 }
-.face-svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 50%; display: block; }
-.card.court.covered .face-svg { display: none; }
+.face-img { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 50%; object-fit: contain; object-position: center bottom; pointer-events: none; }
+.card.court.covered .face-img { display: none; }
 
 /* Card bouncing: landed cards overshoot slightly as they settle. */
 .card.bounce { transition-timing-function: cubic-bezier(0.34, 1.5, 0.64, 1); }
@@ -1373,14 +1373,3 @@ body.back-navy .card.down,
 /* Uncovered court cards: only the top half of the portrait, aligned to the bottom; the rank and suit stay in the top corner */
 .card.court:not(.covered) .face-svg { display: block; }
 
-/* Hide the art's built-in corner, so the rank and suit match the number cards */
-.card.court:not(.covered)::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 42%;
-  height: 26%;
-  background: var(--card);
-  pointer-events: none;
-}
