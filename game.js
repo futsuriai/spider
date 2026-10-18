@@ -15,6 +15,7 @@ const LEVELS = {
   expert: { label: 'Expert', suits: ['S', 'H', 'D', 'C'] },
 };
 const DEFAULT_OPTIONS = {
+  back: 'lattice',
   messages: true,
   brightness: 70,
   rich: true,
@@ -57,6 +58,9 @@ let audio = null;
 let cw = 60;
 let ch = 84;
 let lift = 0;
+let lastUp = new Set();
+let anim = null;
+let pulseSlot = -1;
 
 // ---------- screens and sheets ----------
 
@@ -197,6 +201,7 @@ function collectSuit(ci) {
   col.length -= 13;
   flip(col);
   game.done++;
+  pulseSlot = game.done - 1;
   game.score += 100;
   toast('Suit complete! +100');
   sfx(660, 0.18, 'triangle', 0.07);
@@ -234,6 +239,7 @@ function moveRun(from, idx, to) {
   bounced = new Set(run.map((c) => c.id));
   collectSuit(to);
   sfx(520, 0.05, 'triangle', 0.05);
+  anim = 'move';
   afterChange();
   return true;
 }
@@ -253,6 +259,7 @@ function dealRow() {
   bounced = new Set(batch.map((c) => c.id));
   for (let i = 0; i < 10; i++) collectSuit(i);
   sfx(300, 0.12, 'sine', 0.06);
+  anim = 'deal';
   afterChange();
 }
 
@@ -263,6 +270,7 @@ function undo() {
   Object.assign(game, JSON.parse(prev));
   game.selected = null;
   bounced = new Set();
+  anim = 'move';
   afterChange();
 }
 
@@ -312,15 +320,44 @@ function cardNode(card) {
   node.classList.add('up', s.red ? 'red' : 'black');
   node.dataset.id = card.id;
   const rank = RANKS[card.r];
+  const pips = {
+    2: [[50, 31], [50, 69]],
+    3: [[50, 31], [50, 50], [50, 69]],
+    4: [[25, 31], [75, 31], [25, 69], [75, 69]],
+    5: [[25, 31], [75, 31], [50, 50], [25, 69], [75, 69]],
+    6: [[25, 31], [75, 31], [25, 50], [75, 50], [25, 69], [75, 69]],
+    7: [[25, 31], [75, 31], [50, 40.5], [25, 50], [75, 50], [25, 69], [75, 69]],
+    8: [[25, 31], [75, 31], [50, 40.5], [25, 50], [75, 50], [50, 59.5], [25, 69], [75, 69]],
+    9: [[25, 30], [75, 30], [25, 43.3], [75, 43.3], [50, 50], [25, 56.7], [75, 56.7], [25, 70], [75, 70]],
+    10: [[25, 30], [75, 30], [50, 36.7], [25, 43.3], [75, 43.3], [25, 56.7], [75, 56.7], [50, 63.3], [25, 70], [75, 70]],
+  };
+  let face;
+  if (card.r === 1) {
+    face = `<span class="pip ace">${s.sym}</span>`;
+  } else if (card.r <= 10) {
+    const dense = card.r >= 9 ? ' dense' : '';
+    face = pips[card.r]
+      .map(([x, y]) => `<span class="pip spot${dense}${y > 50 ? ' inv' : ''}" style="left:${x}%;top:${y}%">${s.sym}</span>`)
+      .join('');
+  } else {
+    face =
+      `<span class="court">` +
+      `<b class="court-letter">${rank}</b>` +
+      `<span class="pip court-pip">${s.sym}</span>` +
+      `</span>`;
+  }
   node.innerHTML =
     `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>` +
-    `<span class="pip">${s.sym}</span>` +
+    face +
     `<span class="corner br"><b>${rank}</b><i>${s.sym}</i></span>`;
   return node;
 }
 
-function renderTableau() {
+function renderTableau(before, stockRect) {
   el.tableau.innerHTML = '';
+  const flips = [];
+  const nowUp = new Set();
+  let fresh = 0;
   game.tableau.forEach((col, ci) => {
     const colEl = document.createElement('div');
     colEl.className = 'col';
@@ -334,11 +371,59 @@ function renderTableau() {
       const sel = game.selected;
       if (sel && sel.col === ci && idx >= sel.idx) node.style.transform = `translateY(${-lift}px)`;
       if (options.bounce && bounced.has(card.id)) node.classList.add('bounce');
+      if (card.up) {
+        nowUp.add(card.id);
+        if (anim === 'move' && before.has(card.id)) {
+          flips.push({ node, from: before.get(card.id), delay: 0 });
+        } else if (anim === 'deal' && !before.has(card.id)) {
+          flips.push({ node, from: stockRect, delay: 45 * fresh++ });
+        } else if (lastUp.size && !lastUp.has(card.id) && anim !== 'deal') {
+          node.classList.add('reveal');
+        }
+      }
       colEl.appendChild(node);
       y += card.up ? steps.up : steps.down;
     });
     el.tableau.appendChild(colEl);
   });
+  // Glide each moved or dealt card from where it was to where it is now.
+  flips.forEach(({ node, from, delay }) => {
+    const to = node.getBoundingClientRect();
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    const final = node.style.transform;
+    node.style.transition = 'none';
+    node.style.transform = `translate(${dx}px, ${dy}px) ${final}`;
+    void node.offsetWidth;
+    node.style.transition = '';
+    node.style.transitionDelay = delay + 'ms';
+    node.style.transform = final;
+  });
+  lastUp = nowUp;
+}
+
+function shakeCol(ci) {
+  const colEl = el.tableau.querySelector(`.col[data-col="${ci}"]`);
+  if (!colEl) return;
+  colEl.classList.remove('shake');
+  void colEl.offsetWidth;
+  colEl.classList.add('shake');
+  setTimeout(() => colEl.classList.remove('shake'), 450);
+}
+
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const glyphs = ['♠', '♥', '♦', '♣'];
+  for (let i = 0; i < 44; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti' + (i % 4 === 1 || i % 4 === 2 ? ' red' : '');
+    piece.textContent = glyphs[i % 4];
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.animationDelay = Math.random() * 0.8 + 's';
+    piece.style.animationDuration = 2.4 + Math.random() * 1.6 + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4600);
+  }
 }
 
 function renderTop() {
@@ -361,7 +446,7 @@ function renderTop() {
   el.foundations.innerHTML = '';
   for (let i = 0; i < 8; i++) {
     const slot = document.createElement('div');
-    slot.className = 'slot' + (i < game.done ? ' filled' : '');
+    slot.className = 'slot' + (i < game.done ? ' filled' : '') + (i === pulseSlot ? ' pulse' : '');
     slot.textContent = i < game.done ? '✓' : '';
     el.foundations.appendChild(slot);
   }
@@ -381,15 +466,27 @@ function updateHud() {
   el.time.textContent = fmt(game.elapsed);
 }
 
+function captureRects() {
+  const rects = new Map();
+  el.tableau.querySelectorAll('.card.up').forEach((node) => {
+    rects.set(Number(node.dataset.id), node.getBoundingClientRect());
+  });
+  return rects;
+}
+
 function render() {
   if (!game) return;
+  const before = captureRects();
+  const stockRect = el.stock.getBoundingClientRect();
   layout();
   updateHud();
   renderTop();
-  renderTableau();
+  renderTableau(before, stockRect);
   const noUndo = game.won || game.history.length === 0;
   el.undo.classList.toggle('is-disabled', noUndo);
   el.undo.setAttribute('aria-disabled', String(noUndo));
+  anim = null;
+  pulseSlot = -1;
 }
 
 // ---------- touch: drag a run, or tap a card then tap where it goes ----------
@@ -442,6 +539,7 @@ function onTap(ci, idx) {
   } else {
     game.selected = null;
     note(CANT_MOVE);
+    shakeCol(ci);
   }
   render();
 }
@@ -534,8 +632,11 @@ function endPointer(e) {
   if (d.warned) return render();
   if (!d.moving) return onTap(d.ci, d.idx);
   const to = columnAt(e.clientX, e.clientY);
-  if (to >= 0) moveRun(d.ci, d.idx, to);
-  render();
+  // A successful move already re-rendered; re-rendering again would cut its glide short.
+  if (to < 0 || !moveRun(d.ci, d.idx, to)) {
+    if (to >= 0) shakeCol(to);
+    render();
+  }
 }
 
 el.tableau.addEventListener('pointerup', endPointer);
@@ -575,8 +676,10 @@ $('#btn-confirm-new').addEventListener('click', () => {
 $('#btn-confirm-keep').addEventListener('click', () => closeSheet('sheet-confirm'));
 
 function showWin() {
-  $('#win-text').textContent = `${game.moves} moves in ${fmt(game.elapsed)}. Final score: ${game.score}.`;
+  const moves = `${game.moves} ${game.moves === 1 ? 'move' : 'moves'}`;
+  $('#win-text').textContent = `${moves} in ${fmt(game.elapsed)}. Final score: ${game.score}.`;
   sfx(784, 0.4, 'sine', 0.08);
+  confetti();
   openSheet('sheet-win');
 }
 
@@ -588,14 +691,20 @@ $('#btn-play-again').addEventListener('click', () => {
 function syncOptionInputs() {
   document.querySelectorAll('#screen-options input[name]').forEach((input) => {
     const value = options[input.name];
-    if (input.type === 'checkbox') input.checked = value;
+    if (input.type === 'radio') input.checked = input.value === value;
+    else if (input.type === 'checkbox') input.checked = value;
     else input.value = value;
   });
 }
 
 document.querySelectorAll('#screen-options input[name]').forEach((input) => {
   input.addEventListener('input', () => {
-    options[input.name] = input.type === 'checkbox' ? input.checked : Number(input.value);
+    if (input.type === 'radio') {
+      if (!input.checked) return;
+      options[input.name] = input.value;
+    } else {
+      options[input.name] = input.type === 'checkbox' ? input.checked : Number(input.value);
+    }
     saveOptions();
     applyOptions();
   });
@@ -603,6 +712,8 @@ document.querySelectorAll('#screen-options input[name]').forEach((input) => {
 
 function applyOptions() {
   document.body.classList.toggle('no-rich', !options.rich);
+  document.body.className = document.body.className.replace(/\bback-\S+/g, '').trim();
+  document.body.classList.add('back-' + options.back);
   document.documentElement.style.setProperty('--label-alpha', (0.35 + (0.65 * options.brightness) / 100).toFixed(2));
   if ('audioSession' in navigator) {
     try {

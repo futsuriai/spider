@@ -35,12 +35,13 @@
 
       <h2 class="section-title">New game</h2>
       <div class="levels">
-        <button class="level-tile" type="button" data-diff="easy"><b>Easy</b><small>1 suit</small></button>
-        <button class="level-tile" type="button" data-diff="medium"><b>Medium</b><small>2 suits</small></button>
-        <button class="level-tile" type="button" data-diff="hard"><b>Hard</b><small>4 suits</small></button>
-        <button class="level-tile" type="button" data-diff="bold"><b>Bold</b><small>4 suits</small></button>
-        <button class="level-tile" type="button" data-diff="expert"><b>Expert</b><small>4 suits</small></button>
+        <button class="level-tile" type="button" data-diff="easy"><span class="suits" aria-hidden="true">♠</span><b>Easy</b><small>1 suit</small></button>
+        <button class="level-tile" type="button" data-diff="medium"><span class="suits" aria-hidden="true">♠ <i>♥</i></span><b>Medium</b><small>2 suits</small></button>
+        <button class="level-tile" type="button" data-diff="hard"><span class="suits" aria-hidden="true">♠ <i>♥</i> <i>♦</i> ♣</span><b>Hard</b><small>4 suits</small></button>
+        <button class="level-tile" type="button" data-diff="bold"><span class="suits" aria-hidden="true">♠ <i>♥</i> <i>♦</i> ♣</span><b>Bold</b><small>4 suits</small></button>
+        <button class="level-tile" type="button" data-diff="expert"><span class="suits" aria-hidden="true">♠ <i>♥</i> <i>♦</i> ♣</span><b>Expert</b><small>4 suits</small></button>
       </div>
+      <div class="home-art" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
     </div>
 
     <footer class="home-footer">
@@ -52,14 +53,14 @@
   <!-- The board -->
   <section class="screen" id="screen-game">
     <header class="topbar hud">
-      <button class="btn" id="btn-menu" type="button">Menu</button>
+      <button class="btn" id="btn-menu" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg>Menu</button>
       <div class="stats">
         <div class="stat level"><b id="hud-level">Easy</b></div>
         <div class="stat rich"><span class="label">Score</span> <b id="hud-score">500</b></div>
         <div class="stat rich"><span class="label">Moves</span> <b id="hud-moves">0</b></div>
         <div class="stat rich"><span class="label">Time</span> <b id="hud-time">0:00</b></div>
       </div>
-      <button class="btn" id="btn-undo" type="button">Undo</button>
+      <button class="btn" id="btn-undo" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
     </header>
 
     <main id="board">
@@ -96,6 +97,17 @@
         <span>Use Hearts<small>Easy uses Hearts. Medium uses Hearts and Clubs. Applies to new games.</small></span>
         <input class="switch" type="checkbox" name="hearts">
       </label>
+
+      <div class="row stack">
+        <span>Card back<small>How the face-down cards look</small></span>
+        <div class="back-choices" role="radiogroup" aria-label="Card back">
+          <label class="back-choice"><input type="radio" name="back" value="lattice"><span class="swatch back-lattice"></span><small>Lattice</small></label>
+          <label class="back-choice"><input type="radio" name="back" value="diamond"><span class="swatch back-diamond"></span><small>Diamond</small></label>
+          <label class="back-choice"><input type="radio" name="back" value="medallion"><span class="swatch back-medallion"></span><small>Medallion</small></label>
+          <label class="back-choice"><input type="radio" name="back" value="brass"><span class="swatch back-brass"></span><small>Brass</small></label>
+          <label class="back-choice"><input type="radio" name="back" value="navy"><span class="swatch back-navy"></span><small>Navy</small></label>
+        </div>
+      </div>
 
       <p class="section">Display</p>
       <label class="row">
@@ -149,18 +161,26 @@
   <!-- Sheets -->
   <div class="sheet-overlay" id="sheet-confirm">
     <section class="sheet" role="dialog" aria-labelledby="confirm-title">
+      <div class="sheet-emblem" aria-hidden="true">♠ ♦</div>
+      <p class="sheet-kicker">Game in progress</p>
       <h2 id="confirm-title">Start a new game?</h2>
       <p>Your current game will be lost.</p>
-      <button class="btn primary wide" id="btn-confirm-new" type="button">Start new game</button>
-      <button class="btn wide" id="btn-confirm-keep" type="button">Keep playing</button>
+      <div class="sheet-actions">
+        <button class="btn wide" id="btn-confirm-keep" type="button">Keep playing</button>
+        <button class="btn primary wide" id="btn-confirm-new" type="button">Start new game</button>
+      </div>
     </section>
   </div>
 
   <div class="sheet-overlay" id="sheet-win">
-    <section class="sheet" role="dialog" aria-labelledby="win-title">
+    <section class="sheet sheet-win" role="dialog" aria-labelledby="win-title">
+      <div class="sheet-emblem win-emblem" aria-hidden="true">♠ <i>♥</i> <i>♦</i> ♣</div>
+      <p class="sheet-kicker">Eight suits complete</p>
       <h2 id="win-title">You won!</h2>
       <p id="win-text"></p>
-      <button class="btn primary wide" id="btn-play-again" type="button">Back to start</button>
+      <div class="sheet-actions">
+        <button class="btn primary wide" id="btn-play-again" type="button">Back to start</button>
+      </div>
     </section>
   </div>
 
