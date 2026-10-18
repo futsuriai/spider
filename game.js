@@ -765,15 +765,19 @@ function goHome() {
 // ---------- results: every finished or abandoned game, ranked by period ----------
 
 const RESULTS_KEY = 'spider.results';
-const MAX_RESULTS = 2000;
+const MAX_RESULTS = 50000;
 const PERIODS = { today: 'today', week: 'this week', month: 'this month', year: 'this year', all: 'all time' };
 let resultsPeriod = 'today';
 let resultsEntry = null;
 let resultAction = goHome;
 
+// Stored compactly as [at, won, score, elapsed, moves, diff]; read back as objects.
 function loadResults() {
   const list = read(RESULTS_KEY);
-  return Array.isArray(list) ? list : [];
+  if (!Array.isArray(list)) return [];
+  return list.map((e) => (Array.isArray(e)
+    ? { at: e[0], won: e[1] === 1, score: e[2], elapsed: e[3], moves: e[4], diff: e[5] }
+    : e));
 }
 
 // Records the current game once. Losses are recorded when a game in progress is replaced.
@@ -781,7 +785,6 @@ function recordResult(won) {
   if (!game || game.recorded) return null;
   game.recorded = true;
   const entry = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     at: Date.now(),
     diff: game.diff,
     won,
@@ -789,10 +792,15 @@ function recordResult(won) {
     elapsed: game.elapsed,
     moves: game.moves,
   };
-  const list = loadResults();
-  list.push(entry);
+  const stored = read(RESULTS_KEY);
+  const list = Array.isArray(stored) ? stored : [];
+  list.push([entry.at, won ? 1 : 0, entry.score, entry.elapsed, entry.moves, entry.diff]);
   if (list.length > MAX_RESULTS) list.splice(0, list.length - MAX_RESULTS);
-  write(RESULTS_KEY, list);
+  try {
+    localStorage.setItem(RESULTS_KEY, JSON.stringify(list));
+  } catch {
+    toast('This result could not be saved: the device is out of storage.');
+  }
   return entry;
 }
 
@@ -808,9 +816,12 @@ function periodStart(period, now) {
 }
 
 // Best first: higher score wins, and on a tie the faster game ranks higher.
-function rankedIn(list, entry) {
-  const sorted = [...list].sort((p, q) => q.score - p.score || p.elapsed - q.elapsed);
-  return sorted.findIndex((e) => e.id === entry.id) + 1;
+function rankOf(list, entry) {
+  let better = 0;
+  for (const e of list) {
+    if (e.score > entry.score || (e.score === entry.score && e.elapsed < entry.elapsed)) better++;
+  }
+  return better + 1;
 }
 
 function ordinal(n) {
@@ -834,8 +845,8 @@ function renderResultsPeriod() {
   let text = list.length
     ? `${wins} won · ${losses} lost · best score ${best}`
     : 'No games yet in this period.';
-  if (resultsEntry && list.some((e) => e.id === resultsEntry.id)) {
-    const rank = ordinal(rankedIn(list, resultsEntry));
+  if (resultsEntry && resultsEntry.at >= start && resultsEntry.at <= now) {
+    const rank = ordinal(rankOf(list, resultsEntry));
     text += ` · This game ranked ${rank} of ${list.length} ${PERIODS[resultsPeriod]}.`;
   }
   $('#period-summary').textContent = text;
