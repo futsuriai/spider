@@ -384,6 +384,7 @@ function cardNode(card) {
 function renderTableau(before, stockRect) {
   el.tableau.innerHTML = '';
   const flips = [];
+  const dealt = [];
   const nowUp = new Set();
   let fresh = 0;
   game.tableau.forEach((col, ci) => {
@@ -406,7 +407,7 @@ function renderTableau(before, stockRect) {
         if (anim === 'move' && before.has(card.id)) {
           flips.push({ node, from: before.get(card.id), delay: 0 });
         } else if (anim === 'deal' && !before.has(card.id)) {
-          flips.push({ node, from: stockRect, delay: 45 * fresh++ });
+          dealt.push({ node, ci, delay: 70 * fresh++ });
         } else if (lastUp.size && !lastUp.has(card.id) && anim !== 'deal') {
           node.classList.add('reveal');
         }
@@ -416,13 +417,40 @@ function renderTableau(before, stockRect) {
     });
     el.tableau.appendChild(colEl);
   });
+
+  // Dealt cards fly from the deck in their own layer, so columns cannot clip them.
+  // The card each one lands on stays uncovered until the new card arrives.
+  dealt.forEach(({ node, ci, delay }) => {
+    const colEl = node.parentElement;
+    const under = colEl.children[colEl.children.length - 2];
+    if (under) under.classList.remove('covered');
+    const to = node.getBoundingClientRect();
+    node.style.opacity = '0';
+    const flyer = node.cloneNode(true);
+    flyer.classList.remove('bounce', 'reveal', 'covered');
+    flyer.style.cssText = `position: fixed; left: 0; top: 0; width: var(--cw); height: var(--ch); opacity: 1; transform: none; transition: none; pointer-events: none;`;
+    el.dragLayer.appendChild(flyer);
+    const move = flyer.animate(
+      [
+        { transform: `translate(${stockRect.left}px, ${stockRect.top}px)` },
+        { transform: `translate(${to.left}px, ${to.top}px)` },
+      ],
+      { duration: 460, delay, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards' },
+    );
+    move.onfinish = () => {
+      flyer.remove();
+      node.style.opacity = '';
+      if (under) under.classList.add('covered');
+    };
+  });
+
   // Columns clip their children, which would cut cards off mid-flight, so let them show while cards glide.
   if (flips.length) {
     el.tableau.classList.add('animating');
     clearTimeout(animatingTimer);
     animatingTimer = setTimeout(() => el.tableau.classList.remove('animating'), 1100);
   }
-  // Glide each moved or dealt card from where it was to where it is now.
+  // Glide each moved card from where it was to where it is now.
   flips.forEach(({ node, from, delay }) => {
     const to = node.getBoundingClientRect();
     const dx = from.left - to.left;
