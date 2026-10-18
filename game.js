@@ -374,7 +374,7 @@ function cardNode(card) {
     const word = { 11: 'jack', 12: 'queen', 13: 'king' }[card.r];
     const suitWord = { S: 'spade', H: 'heart', D: 'diamond', C: 'club' }[card.s];
     node.innerHTML =
-      `<svg class="face-svg" viewBox="0 0 169.075 244.64" preserveAspectRatio="none" aria-hidden="true"><use href="court/court-cards.svg#${suitWord}_${word}"/></svg>` +
+      `<svg class="face-svg" viewBox="0 60 169.075 64.32" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><use href="court/court-cards.svg#${suitWord}_${word}"/></svg>` +
       corner;
     return node;
   }
