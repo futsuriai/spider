@@ -1318,3 +1318,8 @@ body.back-navy .card.down,
 .card.hint { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(228, 196, 126, 0.75); }
 .col.hint-target { outline: 3px dashed var(--gold); outline-offset: 2px; }
 .stock.hint { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
+
+/* Covered cards: the visible top edge carries a large rank and suit; no bottom index */
+.card.covered .corner.br { display: none; }
+.card.up .corner.tl b { font-size: calc(var(--cw) * 0.3); }
+.card.up .corner.tl i { font-size: calc(var(--cw) * 0.3); }

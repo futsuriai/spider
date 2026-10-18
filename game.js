@@ -416,6 +416,8 @@ function renderTableau(before, stockRect) {
     col.forEach((card, idx) => {
       const node = cardNode(card);
       node.dataset.idx = idx;
+      // A covered card shows only its top edge, so its bottom index is left out.
+      if (idx < col.length - 1) node.classList.add('covered');
       node.style.top = y + 'px';
       const sel = game.selected;
       if (sel && sel.col === ci && idx >= sel.idx) node.style.transform = `translateY(${-lift}px)`;
