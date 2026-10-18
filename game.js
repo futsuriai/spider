@@ -61,6 +61,7 @@ let lift = 0;
 let lastUp = new Set();
 let anim = null;
 let pulseSlot = -1;
+let animatingTimer = 0;
 
 // ---------- screens and sheets ----------
 
@@ -382,6 +383,12 @@ function renderTableau(before, stockRect) {
     });
     el.tableau.appendChild(colEl);
   });
+  // Columns clip their children, which would cut cards off mid-flight, so let them show while cards glide.
+  if (flips.length) {
+    el.tableau.classList.add('animating');
+    clearTimeout(animatingTimer);
+    animatingTimer = setTimeout(() => el.tableau.classList.remove('animating'), 1100);
+  }
   // Glide each moved or dealt card from where it was to where it is now.
   flips.forEach(({ node, from, delay }) => {
     const to = node.getBoundingClientRect();

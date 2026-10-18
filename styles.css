@@ -704,6 +704,7 @@ body.no-rich .rich { display: none; }
   transition: background 140ms ease, outline-color 140ms ease;
 }
 .col::-webkit-scrollbar { display: none; }
+#tableau.animating .col { overflow: visible; }
 .col.target {
   outline: 2.5px solid var(--gold-light);
   outline-offset: 2px;
