@@ -345,7 +345,7 @@ function layout() {
 }
 
 function fanSteps(n) {
-  const max = ch * 0.22;
+  const max = ch * 0.3;
   const min = ch * 0.1;
   let up = max;
   if (options.spacing && n > 1) {
@@ -366,14 +366,6 @@ function cardNode(card) {
   node.classList.add('up', s.red ? 'red' : 'black');
   node.dataset.id = card.id;
   const rank = RANKS[card.r];
-  if (card.r > 10) {
-    // Court cards are classic full-card images, which carry their own corner indices.
-    node.classList.add('face-art');
-    const word = { 11: 'jack', 12: 'queen', 13: 'king' }[card.r];
-    const suitWord = { S: 'spade', H: 'heart', D: 'diamond', C: 'club' }[card.s];
-    node.innerHTML = `<img class="face-img" src="court/${suitWord}_${word}.png" alt="${word} of ${suitWord}s" draggable="false">`;
-    return node;
-  }
   const pips = {
     2: [[50, 31], [50, 69]],
     3: [[50, 31], [50, 50], [50, 69]],
@@ -394,6 +386,7 @@ function cardNode(card) {
       .map(([x, y]) => `<span class="pip spot${dense}${y > 50 ? ' inv' : ''}" style="left:${x}%;top:${y}%">${s.sym}</span>`)
       .join('');
   } else {
+    face = `<span class="court">${COURT_ART[card.r]}</span>`;
   }
   node.innerHTML =
     `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>` +
