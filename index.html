@@ -45,6 +45,7 @@
     <footer class="home-footer">
       <button class="link-btn" type="button" data-go="options">Options</button>
       <button class="link-btn" type="button" data-go="help">How to play</button>
+      <button class="link-btn" type="button" id="btn-results">Results</button>
     </footer>
   </section>
 
@@ -176,9 +177,17 @@
   <div class="sheet-overlay" id="sheet-win">
     <section class="sheet sheet-win" role="dialog" aria-labelledby="win-title">
       <div class="sheet-emblem win-emblem" aria-hidden="true">♠ <i>♥</i> <i>♦</i> ♣</div>
-      <p class="sheet-kicker">Eight suits complete</p>
+      <p class="sheet-kicker" id="result-kicker">Eight suits complete</p>
       <h2 id="win-title">You won!</h2>
       <p id="win-text"></p>
+      <div class="period-tabs" role="tablist" aria-label="Period">
+        <button class="period-tab" type="button" data-period="today">Today</button>
+        <button class="period-tab" type="button" data-period="week">Week</button>
+        <button class="period-tab" type="button" data-period="month">Month</button>
+        <button class="period-tab" type="button" data-period="year">Year</button>
+        <button class="period-tab" type="button" data-period="all">All time</button>
+      </div>
+      <p id="period-summary" class="period-summary"></p>
       <div class="sheet-actions">
         <button class="btn primary wide" id="btn-play-again" type="button">Back to start</button>
       </div>

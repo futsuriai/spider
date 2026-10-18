@@ -709,22 +709,132 @@ function startGame(level) {
 
 $('#btn-confirm-new').addEventListener('click', () => {
   closeSheet('sheet-confirm');
+  // Replacing a game in progress counts as a loss; show its result before the new game starts.
+  if (game && !game.won && game.moves > 0) {
+    const entry = recordResult(false);
+    showResults(entry, 'Game lost', 'Start new game', () => {
+      closeSheet('sheet-win');
+      startGame(pendingLevel);
+    });
+    return;
+  }
   startGame(pendingLevel);
 });
 $('#btn-confirm-keep').addEventListener('click', () => closeSheet('sheet-confirm'));
 
 function showWin() {
-  const moves = `${game.moves} ${game.moves === 1 ? 'move' : 'moves'}`;
-  $('#win-text').textContent = `${moves} in ${fmt(game.elapsed)}. Final score: ${game.score}.`;
   sfx(784, 0.4, 'sine', 0.08);
   confetti();
+  const entry = recordResult(true);
+  showResults(entry, 'You won!', 'Back to start', goHome);
+}
+
+function goHome() {
+  closeSheet('sheet-win');
+  go('home');
+}
+
+// ---------- results: every finished or abandoned game, ranked by period ----------
+
+const RESULTS_KEY = 'spider.results';
+const MAX_RESULTS = 2000;
+const PERIODS = { today: 'today', week: 'this week', month: 'this month', year: 'this year', all: 'all time' };
+let resultsPeriod = 'today';
+let resultsEntry = null;
+let resultAction = goHome;
+
+function loadResults() {
+  const list = read(RESULTS_KEY);
+  return Array.isArray(list) ? list : [];
+}
+
+// Records the current game once. Losses are recorded when a game in progress is replaced.
+function recordResult(won) {
+  if (!game || game.recorded) return null;
+  game.recorded = true;
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: Date.now(),
+    diff: game.diff,
+    won,
+    score: game.score,
+    elapsed: game.elapsed,
+    moves: game.moves,
+  };
+  const list = loadResults();
+  list.push(entry);
+  if (list.length > MAX_RESULTS) list.splice(0, list.length - MAX_RESULTS);
+  write(RESULTS_KEY, list);
+  return entry;
+}
+
+// Start of the chosen period, in local time. Weeks start on Monday.
+function periodStart(period, now) {
+  if (period === 'all') return 0;
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  if (period === 'week') d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  if (period === 'month') d.setDate(1);
+  if (period === 'year') d.setMonth(0, 1);
+  return d.getTime();
+}
+
+// Best first: higher score wins, and on a tie the faster game ranks higher.
+function rankedIn(list, entry) {
+  const sorted = [...list].sort((p, q) => q.score - p.score || p.elapsed - q.elapsed);
+  return sorted.findIndex((e) => e.id === entry.id) + 1;
+}
+
+function ordinal(n) {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+  return n + suffix;
+}
+
+function renderResultsPeriod() {
+  const now = Date.now();
+  const start = periodStart(resultsPeriod, now);
+  const list = loadResults().filter((e) => e.at >= start && e.at <= now);
+  document.querySelectorAll('.period-tab').forEach((tab) => {
+    const active = tab.dataset.period === resultsPeriod;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', String(active));
+  });
+  const wins = list.filter((e) => e.won).length;
+  const losses = list.length - wins;
+  const best = list.length ? Math.max(...list.map((e) => e.score)) : null;
+  let text = list.length
+    ? `${wins} won · ${losses} lost · best score ${best}`
+    : 'No games yet in this period.';
+  if (resultsEntry && list.some((e) => e.id === resultsEntry.id)) {
+    const rank = ordinal(rankedIn(list, resultsEntry));
+    text += ` · This game ranked ${rank} of ${list.length} ${PERIODS[resultsPeriod]}.`;
+  }
+  $('#period-summary').textContent = text;
+}
+
+function showResults(entry, title, actionLabel, action) {
+  resultsEntry = entry;
+  resultAction = action;
+  $('#win-title').textContent = title;
+  $('#result-kicker').textContent = entry ? (entry.won ? 'Eight suits complete' : 'Game over') : 'Your games';
+  $('#win-text').textContent = entry
+    ? `Score ${entry.score} · ${fmt(entry.elapsed)} · ${entry.moves} ${entry.moves === 1 ? 'move' : 'moves'}`
+    : '';
+  $('#btn-play-again').textContent = actionLabel;
+  renderResultsPeriod();
   openSheet('sheet-win');
 }
 
-$('#btn-play-again').addEventListener('click', () => {
-  closeSheet('sheet-win');
-  go('home');
+document.querySelectorAll('.period-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    resultsPeriod = tab.dataset.period;
+    renderResultsPeriod();
+  });
 });
+
+$('#btn-play-again').addEventListener('click', () => resultAction());
+$('#btn-results').addEventListener('click', () => showResults(null, 'Results', 'Back to start', goHome));
 
 function syncOptionInputs() {
   document.querySelectorAll('#screen-options input[name]').forEach((input) => {

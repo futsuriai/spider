@@ -1373,3 +1373,34 @@ body.back-navy .card.down,
 /* Uncovered court cards: only the top half of the portrait, aligned to the bottom; the rank and suit stay in the top corner */
 .card.court:not(.covered) .face-svg { display: block; }
 
+
+/* Results: period tabs and the summary line under the result */
+.period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px 0 10px;
+}
+.period-tab {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: none;
+  color: var(--maroon);
+  font-size: 16px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.period-tab.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ink);
+}
+.period-summary {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--muted-ink);
+}
