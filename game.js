@@ -340,11 +340,7 @@ function cardNode(card) {
       .map(([x, y]) => `<span class="pip spot${dense}${y > 50 ? ' inv' : ''}" style="left:${x}%;top:${y}%">${s.sym}</span>`)
       .join('');
   } else {
-    face =
-      `<span class="court">` +
-      `<b class="court-letter">${rank}</b>` +
-      `<span class="pip court-pip">${s.sym}</span>` +
-      `</span>`;
+    face = `<span class="court">${COURT_ART[card.r]}</span>`;
   }
   node.innerHTML =
     `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>` +

@@ -825,55 +825,26 @@ body.no-rich .rich { display: none; }
   transform: translate(-50%, -50%) rotate(180deg);
 }
 
-/* Court cards (J, Q, K): framed ivory panel with ornate serif letter and suit emblem */
+/* Court cards (J, Q, K): illustrated SVG portrait in a framed panel; the robe takes the suit colour */
 .court {
   position: absolute;
-  top: 24.5%;
-  bottom: 24.5%;
+  top: 22%;
+  bottom: 22%;
   left: 12%;
   right: 12%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--cw) * 0.02);
-  border-radius: calc(var(--cw) * 0.045);
-  border: 1.5px solid var(--ink);
-  background:
-    repeating-linear-gradient(45deg, rgba(180, 147, 86, 0.06) 0 1px, transparent 1px 4px),
-    radial-gradient(ellipse at center, #fffef9 0%, var(--card) 58%, var(--card-warm) 100%);
-  box-shadow:
-    inset 0 0 0 1.2px var(--card),
-    inset 0 0 0 2.2px rgba(180, 147, 86, 0.72),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: calc(var(--cw) * 0.05);
+  overflow: hidden;
+  border: 1px solid var(--brass);
+  background: linear-gradient(180deg, #fffef9 0%, var(--card) 60%, var(--card-warm) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
   pointer-events: none;
 }
-.card.up.red .court {
-  border-color: var(--maroon);
-}
-.court::after {
-  content: "";
-  width: 54%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--brass), transparent);
-  order: 1;
-}
-.court-letter {
-  order: 0;
-  font-family: var(--font-display);
-  font-size: calc(var(--cw) * 0.33);
-  font-weight: 700;
-  line-height: 0.92;
-  color: inherit;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9),
-    1px 1px 0 rgba(180, 147, 86, 0.42);
-}
-.court-pip {
-  order: 2;
-  font-size: calc(var(--cw) * 0.21);
-  line-height: 0.95;
-  color: inherit;
+.card.up.red .court { color: var(--card-red); }
+.card.up.black .court { color: var(--ink); }
+.court svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* Card bouncing: landed cards overshoot slightly as they settle. */
