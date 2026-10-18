@@ -1313,3 +1313,8 @@ body.back-navy .card.down,
 }
 .back-choice:has(input:checked) small { color: var(--cream); }
 .back-choice:focus-within { outline: 3px solid var(--cream); outline-offset: 2px; }
+
+/* Hints: the suggested card, its target column, and the stock, lit in gold for a few seconds */
+.card.hint { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgba(228, 196, 126, 0.75); }
+.col.hint-target { outline: 3px dashed var(--gold); outline-offset: 2px; }
+.stock.hint { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 8px; }

@@ -264,6 +264,50 @@ function dealRow() {
   afterChange();
 }
 
+// Finds a legal move to suggest: prefer moves that turn over a face-down card.
+function findHint() {
+  if (!game || game.won) return null;
+  let best = null;
+  game.tableau.forEach((src, from) => {
+    for (let idx = 0; idx < src.length; idx++) {
+      if (!isRun(src, idx)) continue;
+      const run = src.slice(idx);
+      const reveals = idx > 0 && !src[idx - 1].up;
+      game.tableau.forEach((dst, to) => {
+        if (to === from || !canDrop(run, dst)) return;
+        if (dst.length === 0 && idx === 0) return;
+        const score = (reveals ? 10 : 0) + (dst.length ? 1 : 0) + run.length * 0.1;
+        if (!best || score > best.score) best = { from, idx, to, score };
+      });
+    }
+  });
+  if (best) return best;
+  if (game.stock.length && game.tableau.every((c) => c.length)) return { deal: true };
+  return null;
+}
+
+let hintTimer = 0;
+function showHint() {
+  const hint = findHint();
+  el.tableau.querySelectorAll('.hint, .hint-target').forEach((n) => n.classList.remove('hint', 'hint-target'));
+  el.stock.classList.remove('hint');
+  if (!hint) return toast('No moves to suggest. Try Undo, or start a new game.');
+  if (hint.deal) {
+    el.stock.classList.add('hint');
+    toast('Deal the next row.');
+  } else {
+    const src = el.tableau.querySelector(`.col[data-col="${hint.from}"] .card[data-idx="${hint.idx}"]`);
+    if (src) src.classList.add('hint');
+    el.tableau.querySelector(`.col[data-col="${hint.to}"]`).classList.add('hint-target');
+    toast('Try moving the highlighted cards.');
+  }
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    el.tableau.querySelectorAll('.hint, .hint-target').forEach((n) => n.classList.remove('hint', 'hint-target'));
+    el.stock.classList.remove('hint');
+  }, 3000);
+}
+
 function undo() {
   if (!game || game.won) return;
   const prev = game.history.pop();
@@ -653,6 +697,8 @@ el.tableau.addEventListener('pointerup', endPointer);
 el.tableau.addEventListener('pointercancel', endPointer);
 el.stock.addEventListener('click', dealRow);
 el.undo.addEventListener('click', undo);
+el.hint = document.querySelector('#btn-hint');
+el.hint.addEventListener('click', showHint);
 el.menu.addEventListener('click', () => go('home'));
 
 // ---------- home, options, help, win, confirm ----------
