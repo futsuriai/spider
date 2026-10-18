@@ -364,34 +364,22 @@ function cardNode(card) {
   }
   const s = SUITS[card.s];
   node.classList.add('up', s.red ? 'red' : 'black');
+  if (card.r === 10) node.classList.add('ten');
   node.dataset.id = card.id;
   const rank = RANKS[card.r];
-  const pips = {
-    2: [[50, 31], [50, 69]],
-    3: [[50, 31], [50, 50], [50, 69]],
-    4: [[25, 31], [75, 31], [25, 69], [75, 69]],
-    5: [[25, 31], [75, 31], [50, 50], [25, 69], [75, 69]],
-    6: [[25, 31], [75, 31], [25, 50], [75, 50], [25, 69], [75, 69]],
-    7: [[25, 31], [75, 31], [50, 40.5], [25, 50], [75, 50], [25, 69], [75, 69]],
-    8: [[25, 31], [75, 31], [50, 40.5], [25, 50], [75, 50], [50, 59.5], [25, 69], [75, 69]],
-    9: [[25, 30], [75, 30], [25, 43.3], [75, 43.3], [50, 50], [25, 56.7], [75, 56.7], [25, 70], [75, 70]],
-    10: [[25, 30], [75, 30], [50, 36.7], [25, 43.3], [75, 43.3], [25, 56.7], [75, 56.7], [50, 63.3], [25, 70], [75, 70]],
-  };
-  let face;
-  if (card.r === 1) {
-    face = `<span class="pip ace">${s.sym}</span>`;
-  } else if (card.r <= 10) {
-    const dense = card.r >= 9 ? ' dense' : '';
-    face = pips[card.r]
-      .map(([x, y]) => `<span class="pip spot${dense}${y > 50 ? ' inv' : ''}" style="left:${x}%;top:${y}%">${s.sym}</span>`)
-      .join('');
-  } else {
-    face = `<span class="court">${COURT_ART[card.r]}</span>`;
+  const corner = `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>`;
+  if (card.r > 10) {
+    // Court cards: the licensed full-card art on uncovered cards; covered cards show only the corner.
+    node.classList.add('court');
+    const word = { 11: 'jack', 12: 'queen', 13: 'king' }[card.r];
+    const suitWord = { S: 'spade', H: 'heart', D: 'diamond', C: 'club' }[card.s];
+    node.innerHTML =
+      `<svg class="face-svg" viewBox="0 0 169.075 244.64" preserveAspectRatio="none" aria-hidden="true"><use href="court/court-cards.svg#${suitWord}_${word}"/></svg>` +
+      corner;
+    return node;
   }
-  node.innerHTML =
-    `<span class="corner tl"><b>${rank}</b><i>${s.sym}</i></span>` +
-    face +
-    `<span class="corner br"><b>${rank}</b><i>${s.sym}</i></span>`;
+  // Number cards show one large suit in the open area, like an Ace; covered cards hide it in CSS.
+  node.innerHTML = corner + `<span class="pip ace">${s.sym}</span>`;
   return node;
 }
 

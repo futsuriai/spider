@@ -767,36 +767,41 @@ body.no-rich .rich { display: none; }
     inset 0 0 0 3.2px var(--brass);
 }
 
-/* ---------- card faces: corner indices, classic pips (A, 2–10), and court cards (J, Q, K) ---------- */
+/* ---------- card faces: top rank and suit, large centre suit (A–10), and court cards (J, Q, K) ---------- */
 
-/* Rank and suit sit side by side along the top edge, so both stay visible when cards overlap. */
+/* Rank (top-left) and suit (top-right) sit side by side along the top edge, so both stay visible when cards overlap. */
 .corner {
   position: absolute;
-  left: 8%;
+  top: 4.5%;
+  left: 9%;
   right: 8%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  font-size: calc(var(--cw) * 0.25);
-  line-height: 1;
+  line-height: 0.88;
   pointer-events: none;
 }
 .corner b {
-  font-size: calc(var(--cw) * 0.27);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  display: inline-block;
+  font-size: calc(var(--cw) * 0.44);
+  font-weight: 700;
+  letter-spacing: -0.05em;
   font-variant-numeric: lining-nums;
+  transform: scaleX(0.8);
+  transform-origin: left center;
+}
+.card.ten .corner b {
+  letter-spacing: -0.09em;
+  transform: scaleX(0.72);
 }
 .corner i {
   font-style: normal;
-  font-size: calc(var(--cw) * 0.22);
+  font-size: calc(var(--cw) * 0.41);
+  line-height: 0.88;
 }
-.corner.tl { top: 5%; }
-.corner.br {
-  bottom: 5%;
-  transform: rotate(180deg);
-}
+.corner.tl { top: 4.5%; }
+.corner.br { display: none; }
 
 .pip {
   line-height: 1;
@@ -804,45 +809,30 @@ body.no-rich .rich { display: none; }
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.65));
 }
 
-/* Ace: large centre pip */
+/* Uncovered number cards (A–10): one large centre suit in the open lower space */
 .pip.ace {
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 65%;
   transform: translate(-50%, -50%);
-  font-size: calc(var(--cw) * 0.52);
+  font-size: calc(var(--cw) * 0.78);
 }
+.card.covered .pip { display: none; }
 
-/* Ranks 2 to 10: classic positioned suit symbols, inverted in the lower half */
-.pip.spot {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: calc(var(--cw) * 0.215);
-}
-.pip.spot.dense {
-  font-size: calc(var(--cw) * 0.185);
-}
-.pip.spot.inv {
-  transform: translate(-50%, -50%) rotate(180deg);
-}
-
-/* Court cards: an engraved SVG portrait in the open area of an uncovered card */
-.court {
-  position: absolute;
-  top: 22%;
-  bottom: 22%;
-  left: 12%;
-  right: 12%;
-  border-radius: calc(var(--cw) * 0.05);
+/* Court cards (J, Q, K): licensed full-card SVG when uncovered; rank and suit corner when covered */
+.card.court:not(.covered) {
   overflow: hidden;
-  border: 1px solid var(--brass);
-  background: linear-gradient(180deg, #fffef9 0%, var(--card) 60%, var(--card-warm) 100%);
+}
+.face-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
 }
-.card.up.red .court { color: var(--card-red); }
-.card.up.black .court { color: var(--ink); }
-.court svg { display: block; width: 100%; height: 100%; }
-.card.covered .court { display: none; }
+.card.court.covered .face-svg { display: none; }
+.card.court:not(.covered) .corner { display: none; }
 
 /* Card bouncing: landed cards overshoot slightly as they settle. */
 .card.bounce { transition-timing-function: cubic-bezier(0.34, 1.5, 0.64, 1); }
@@ -1333,16 +1323,6 @@ body.back-navy .card.down,
 .col.hint-target { outline: 3px dashed var(--gold); outline-offset: 2px; }
 .stock.hint { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 8px; }
 
-/* Covered cards: the visible top edge carries a large rank and suit; no bottom index */
-.card.covered .corner.br { display: none; }
-.card.up .corner.tl b { font-size: calc(var(--cw) * 0.3); }
-.card.up .corner.tl i { font-size: calc(var(--cw) * 0.3); }
-
-/* Covered cards: the visible top edge carries a full rank and a large suit */
-.card.up .corner.tl { top: 4%; left: 6%; }
-.card.up .corner.tl b { font-size: calc(var(--cw) * 0.28); }
-.card.up .corner.tl i { font-size: calc(var(--cw) * 0.34); }
-
 /* Compact header: the deck and the eight suit spots sit in the top bar, so columns use the full height */
 .pile-area {
   display: flex;
@@ -1386,3 +1366,14 @@ body.back-navy .card.down,
 .hud { grid-template-columns: auto 1fr auto auto; }
 .actions { display: flex; gap: 8px; white-space: nowrap; }
 .hud .btn { min-width: 0; }
+
+/* Header on iPad: the stats shrink rather than overlap, and the actions drop their labels on narrower screens */
+.hud { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; }
+.stats { min-width: 0; overflow: hidden; gap: clamp(10px, 1.6vw, 22px); }
+.stat b { font-size: clamp(16px, 1.7vw, 20px); }
+.label { font-size: clamp(11px, 1.1vw, 14px); }
+.pile-area { flex: 0 0 auto; }
+.hud .btn { min-width: 46px; padding: 0 clamp(10px, 1.4vw, 16px); }
+@media (max-width: 1280px) {
+  .btn-label { display: none; }
+}

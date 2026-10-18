@@ -6,7 +6,7 @@ const ASSETS = [
   'index.html',
   'styles.css',
   'game.js',
-  'court-art.js',
+  'court/court-cards.svg',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
